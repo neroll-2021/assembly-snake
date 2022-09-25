@@ -51,16 +51,6 @@ start:  cli
 
         call installInt9
 
-        ;call clearBuffer
-
-        ; push dx
-        ; mov dx,round
-        ; call debug
-        ; mov cl,02h
-        ; call delay
-        ; pop dx
-
-
 gbegin: call setInt9
 
         call clearScreen        ; 清空屏幕
@@ -97,6 +87,7 @@ gloop:
         mov bx,snake[bx]
         mov byte ptr es:[bx],01110000b
         mov byte ptr es:[bx+2],01110000b
+        and al,11011111b
 
 
 jwin:   mov bl,al
@@ -475,6 +466,7 @@ gend:   mov ah,01h
                     mov bx,tail
                     mov bx,snake[bx]
                     and byte ptr es:[bx],0
+                    mov byte ptr es:[bx+2],0
                     add tail,2
                     and tail,01ffh
 
