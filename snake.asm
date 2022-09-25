@@ -44,21 +44,18 @@ start:  cli
         mov ax,data
         mov ds,ax
 
-        
-
         mov cx,2000h
         mov ah,01h
         int 10h                 ; 调用 int 10h 中断例程隐藏光标
 
         call installInt9
 
-
-        push dx
-        mov dx,round
-        call debug
-        mov cl,02h
-        call delay
-        pop dx
+        ; push dx
+        ; mov dx,round
+        ; call debug
+        ; mov cl,02h
+        ; call delay
+        ; pop dx
 
 
 gbegin: call setInt9
@@ -74,10 +71,8 @@ gbegin: call setInt9
 
         call printSnake
 
-
-gloop:  call calculate         ; 计算蛇移动后的位置
-
-
+gloop:  
+        call calculate         ; 计算蛇移动后的位置
 
         call checkStatus       ; 判断当前蛇的状态, 会改变 al 的值
 
@@ -178,7 +173,7 @@ gend:   mov ah,01h
 
                 mov bx,0
                 mov dh,0
-                mov dl,03h
+                mov dl,cl
 
                 ;sti
         delays: sub bx,1
@@ -257,7 +252,6 @@ gend:   mov ah,01h
                     mov ah,0
                     mov al,00000011b    ; al 中存储状态
                     mov score,0
-                    ; mov food, 160*4+2*16
                     call createFood
 
                     pop cx
@@ -303,8 +297,8 @@ gend:   mov ah,01h
                     mov bx,0b800h
                     mov es,bx
 
-                    mov ah,0
-        cratfod:    in al,42h
+        cratfod:    mov ah,0
+                    in al,42h
                     mov bl,23
                     div bl
                     inc ah
@@ -675,6 +669,7 @@ gend:   mov ah,01h
 
         ggloop:     mov ah,0
                     int 16h
+                    cli
                     mov dl,ah
                     cmp dl,1
                     je ggret
@@ -727,6 +722,7 @@ gend:   mov ah,01h
 
         winloop:    mov ah,0
                     int 16h
+                    cli
                     mov dl,ah
                     cmp dl,1
                     je winret
@@ -832,10 +828,7 @@ gend:   mov ah,01h
         ;       将 0:36, 0:38 中的地址改为 0:200
 
         installInt9:push bx
-                    push si
                     push es
-                    push ds
-                    push di
 
                     mov bx,0
                     mov es,bx
@@ -845,24 +838,10 @@ gend:   mov ah,01h
                     push es:[9*4+2]
                     pop int9[2]      ; 保存原来 int 9 中断例程的地址
 
-                    ;mov bx,cs
-                    ;mov ds,bx
-                    ;mov si,offset keyPress
-                    ;mov di,200h
-                    ;mov cx,offset keyPressend - offset keyPress
-                    ;cld
-                    ;rep movsb
-
-                    ;mov word ptr es:[9*4],200h
-                    ;mov word ptr es:[9*4+2],0
-
                     mov word ptr es:[9*4],offset keyPress
                     mov word ptr es:[9*4+2],cs
 
-                    pop di
-                    pop ds
                     pop es
-                    pop si
                     pop bx
                     ret
         ; installInt9 END -----------------------------------
@@ -1000,8 +979,6 @@ gend:   mov ah,01h
                     ; pop cx
                     ; pop dx
 
-                    
-                    
 
                         ;sti
                         ;mov ah,0
@@ -1048,10 +1025,11 @@ gend:   mov ah,01h
                         jmp keyPressret
 
                         
-
-                        cli
-        keyPressret:    mov ah,0
+                        mov ah,0
                         int 16h
+                        cli
+
+        keyPressret:    
 
                         
                         pop ax
