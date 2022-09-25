@@ -88,6 +88,7 @@ gloop:
         mov byte ptr es:[bx],01110000b
         mov byte ptr es:[bx+2],01110000b
         and al,11011111b
+        call createFood
 
 
 jwin:   mov bl,al
@@ -322,7 +323,10 @@ gend:   mov ah,01h
                     mov es,bx
 
         cratfod:    mov ah,0
-                    in al,43h
+                    mov al,0
+                    out 40h,al
+                    in al,40h
+                    in al,40h
                     mov bl,23
                     div bl
                     inc ah
@@ -340,7 +344,10 @@ gend:   mov ah,01h
 
                     mov dx,ax
 
-                    in al,43h
+                    mov al,0
+                    out 40h,al
+                    in al,40h
+                    in al,40h
                     mov bl,45
                     div bl
                     add ah,2
@@ -361,6 +368,8 @@ gend:   mov ah,01h
                     mov bx,dx
                     mov bl,es:[bx]
                     cmp bl,01110000b
+                    je cratfod
+                    cmp bl,00110000b
                     je cratfod
 
                     mov food,dx
@@ -506,7 +515,6 @@ gend:   mov ah,01h
         calcret:    mov snake[si],dx
 
                     add head,2
-
                     and head,01ffh
 
                     pop dx
@@ -564,13 +572,11 @@ gend:   mov ah,01h
                         cmp snake[bx],di
                         jne judgelife
                         or cl,00100000b
+                        add score,10
 
         judgelife:      mov ax,snake[bx]
-
                         dec ax
-
                         mov bl,160
-
                         div bl
 
                         cmp al,0
