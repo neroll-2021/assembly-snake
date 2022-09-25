@@ -53,6 +53,8 @@ start:  cli
 
 gbegin: call setInt9
 
+        call clearBuffer
+
         call clearScreen        ; 清空屏幕
 
         ; mov cl,05h
@@ -64,7 +66,7 @@ gbegin: call setInt9
 
         call printSnake
 
-gloop:  
+gloop:  inc round
         call calculate         ; 计算蛇移动后的位置
 
         call checkStatus       ; 判断当前蛇的状态, 会改变 al 的值
@@ -81,14 +83,7 @@ gloop:
         cmp bl,00100000b
         jne jwin                ; 判断是否吃到食物, 如果没吃到就跳过 addlen
         ;call addlen             ; 如果吃到食物, 增加长度
-        sub tail,2
-        and tail,01ffh
-        mov bx,tail
-        mov bx,snake[bx]
-        mov byte ptr es:[bx],01110000b
-        mov byte ptr es:[bx+2],01110000b
-        and al,11011111b
-        call createFood
+        call eatFood
 
 
 jwin:   mov bl,al
@@ -100,12 +95,10 @@ jwin:   mov bl,al
 
 pause:  
 
-        inc round
-
-        ; push dx
-        ; mov dx,round
-        ; call debug
-        ; pop dx
+        push dx
+        mov dx,round
+        call debug
+        pop dx
 
         mov cl,03h              ; cl 存储停顿的时间
         call delay               ; 停顿一段时间, 此时接受键盘输入
@@ -118,7 +111,7 @@ dead:   call gameOver           ; 打印 Game Over, 按 ENTER 重新开始, 按 
         jne gbegin
         jmp gend
 
-win:    call updateScreen
+win:    ;call updateScreen
         call youWin             ; 打印 You Win, 按 ENTER 重新开始, 按 ESC 退出
         cmp dl,1                ; youWin 要保证 dl 要么为 1 (ESC), 要么为 1ch (ENTER)
         jne gbegin
@@ -130,7 +123,7 @@ gend:   mov ah,01h
         int 10h                 ; 调用 int 10h 中断例程显示光标
 
         call loadInt9
-        ;sti
+        sti
         mov ax,4c00h
         int 21h
 
@@ -208,12 +201,37 @@ gend:   mov ah,01h
                 cmp dx,0
                 jne delays
 
-                
                 cli
                 pop dx
                 pop bx
                 ret
         ; delay END ---------------------------------------
+
+
+        ; eatFood BEGIN -----------------------------------
+        ; 名称: eatFood
+        ; 参数: 无
+        ; 功能: 使蛇尾保持不变, 重置状态字节的食物位, 重新生成食物
+
+        eatFood:    push bx
+                    push es
+
+                    mov bx,0b800h
+                    mov es,bx
+
+                    sub tail,2
+                    and tail,01ffh
+                    mov bx,tail
+                    mov bx,snake[bx]
+                    mov byte ptr es:[bx],01110000b
+                    mov byte ptr es:[bx+2],01110000b
+                    and al,11011111b
+                    call createFood
+
+                    pop es
+                    pop bx
+                    ret
+        ; eatFood END -------------------------------------
 
 
         ; printSnake BEGIN -------------------------------
@@ -278,6 +296,8 @@ gend:   mov ah,01h
                     mov al,00000011b    ; al 中存储状态
                     mov score,0
                     call createFood
+
+                    mov round,0
 
                     pop cx
                     pop bx
@@ -1008,22 +1028,6 @@ gend:   mov ah,01h
 
                         pushf
                         call dword ptr int9[0]
-
-
-                    ; push dx
-                    ; push cx
-                    ; mov dx,int9
-                    ; call debug
-                    ; mov cl,30h
-                    ; call delay
-                    ; pop cx
-                    ; pop dx
-
-
-                        ;sti
-                        ;mov ah,0
-                        ;int 16h
-                        
 
                         and bh,00000110b
                         shr bh,1            ; bh 保存当前方向
