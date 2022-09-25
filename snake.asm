@@ -37,6 +37,7 @@ data ends
 
 code segment
 start:  cli
+        
         mov ax,stack
         mov ss,ax
         mov sp,128
@@ -49,6 +50,8 @@ start:  cli
         int 10h                 ; 调用 int 10h 中断例程隐藏光标
 
         call installInt9
+
+        ;call clearBuffer
 
         ; push dx
         ; mov dx,round
@@ -90,7 +93,10 @@ gloop:
         ;call addlen             ; 如果吃到食物, 增加长度
         sub tail,2
         and tail,01ffh
-
+        mov bx,tail
+        mov bx,snake[bx]
+        mov byte ptr es:[bx],01110000b
+        mov byte ptr es:[bx+2],01110000b
 
 
 jwin:   mov bl,al
@@ -136,6 +142,33 @@ gend:   mov ah,01h
         mov ax,4c00h
         int 21h
 
+        ; clearBuffer BEGIN -------------------------------------
+        ; 名称: clearBuffer
+        ; 参数: 无
+        ; 功能: 清空键盘缓冲区
+
+        clearBuffer:    push ax
+                        push bx
+
+        clearBuffers:   mov ah,1
+                        int 16h
+
+                        jz clearBufferret
+                        mov ah,0
+                        int 16h
+
+                        ;call clearScreen
+                        ;call crash
+
+                        jmp clearBuffers
+
+        clearBufferret: pop bx
+                        pop ax
+                        ret
+
+
+        ; clearBuffer END ---------------------------------------
+
 
         ; clearScreen BEGIN -------------------------------------
         ; 名称: clearScreen
@@ -175,7 +208,7 @@ gend:   mov ah,01h
                 mov dh,0
                 mov dl,cl
 
-                ;sti
+                sti
         delays: sub bx,1
                 sbb dx,0
                 cmp bx,0
@@ -184,7 +217,7 @@ gend:   mov ah,01h
                 jne delays
 
                 
-                ;cli
+                cli
                 pop dx
                 pop bx
                 ret
@@ -298,7 +331,7 @@ gend:   mov ah,01h
                     mov es,bx
 
         cratfod:    mov ah,0
-                    in al,42h
+                    in al,43h
                     mov bl,23
                     div bl
                     inc ah
@@ -316,7 +349,7 @@ gend:   mov ah,01h
 
                     mov dx,ax
 
-                    in al,42h
+                    in al,43h
                     mov bl,45
                     div bl
                     add ah,2
@@ -433,9 +466,15 @@ gend:   mov ah,01h
 
         calculate:  push bx
                     push si
+                    push es
                     push dx
 
+                    mov bx,0b800h
+                    mov es,bx
+
                     mov bx,tail
+                    mov bx,snake[bx]
+                    and byte ptr es:[bx],0
                     add tail,2
                     and tail,01ffh
 
@@ -479,6 +518,7 @@ gend:   mov ah,01h
                     and head,01ffh
 
                     pop dx
+                    pop es
                     pop si
                     pop bx
                     ret
@@ -830,6 +870,8 @@ gend:   mov ah,01h
         installInt9:push bx
                     push es
 
+                    call clearBuffer
+
                     mov bx,0
                     mov es,bx
 
@@ -1025,12 +1067,9 @@ gend:   mov ah,01h
                         jmp keyPressret
 
                         
-                        mov ah,0
-                        int 16h
-                        cli
+                        
 
-        keyPressret:    
-
+        keyPressret:    call clearBuffer
                         
                         pop ax
                         mov al,bl
@@ -1039,6 +1078,25 @@ gend:   mov ah,01h
 
         keyPressend:    nop
         ; keyPress END -----------------------------------
+
+
+
+        crash:  push dx
+                push ax
+
+                mov dx,0ff00h
+                mov ax,0
+        crashs: sub ax,1
+                sbb dx,0
+                cmp ax,0
+                jne crashs
+                cmp dx,0
+                jne crashs
+
+                pop ax
+                pop dx
+                ret
+
 code ends
 
 end start
