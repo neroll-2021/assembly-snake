@@ -107,10 +107,10 @@ pause:
         mov cl,02h              ; cl 存储停顿的时间
         call delay               ; 停顿一段时间, 此时接受键盘输入
 
-        push dx
-        mov dx,head
-        call debug
-        pop dx
+        ; push dx
+        ; mov dx,head
+        ; call debug
+        ; pop dx
 
         ; push dx
         ; push ax
@@ -133,7 +133,13 @@ pause:
 
         jmp gloop               ; 进入下一轮
 
-dead:   call gameOver           ; 打印 Game Over, 按 ENTER 重新开始, 按 ESC 退出
+
+dead:    
+
+        call gameOver           ; 打印 Game Over, 按 ENTER 重新开始, 按 ESC 退出
+
+        
+
         cmp dl,1                ; gameOver 要保证 dl 要么为 1 (ESC), 要么为 1ch (ENTER)
         jne gbegin
         jmp gend
@@ -524,14 +530,14 @@ gend:   mov ah,01h
                     mov bx,0b800h
                     mov es,bx
 
-                    mov bx,tail
-                    mov bx,snake[bx]
-                    and byte ptr es:[bx],0
-                    mov byte ptr es:[bx+2],0
-                    add tail,2
-                    and tail,01ffh
+                    ; mov bx,tail
+                    ; mov bx,snake[bx]
+                    ; and byte ptr es:[bx],0
+                    ; mov byte ptr es:[bx+2],0
+                    ; add tail,2
+                    ; and tail,01ffh
 
-                    mov si,head
+        calcpos:    mov si,head
                     sub si,2
                     and si,01ffh
                     mov dx,snake[si]
@@ -639,17 +645,17 @@ gend:   mov ah,01h
                         cmp al,0
                         jne csbottom
 
-                        push dx
-                        push cx
-                        push si
-                        mov dh,5
-                        mov dl,7
-                        mov cl,3
-                        mov si,offset str_clash_u
-                        call showStr
-                        pop si
-                        pop cx
-                        pop dx
+                        ; push dx
+                        ; push cx
+                        ; push si
+                        ; mov dh,5
+                        ; mov dl,7
+                        ; mov cl,3
+                        ; mov si,offset str_clash_u
+                        ; call showStr
+                        ; pop si
+                        ; pop cx
+                        ; pop dx
 
                         ; je bedead
                         jmp bedead
@@ -657,17 +663,17 @@ gend:   mov ah,01h
         csbottom:       cmp al,24
                         jne csleft
 
-                        push dx
-                        push cx
-                        push si
-                        mov dh,5
-                        mov dl,7
-                        mov cl,3
-                        mov si,offset str_clash_b
-                        call showStr
-                        pop si
-                        pop cx
-                        pop dx
+                        ; push dx
+                        ; push cx
+                        ; push si
+                        ; mov dh,5
+                        ; mov dl,7
+                        ; mov cl,3
+                        ; mov si,offset str_clash_b
+                        ; call showStr
+                        ; pop si
+                        ; pop cx
+                        ; pop dx
 
                         ; je bedead
                         jmp bedead
@@ -677,17 +683,17 @@ gend:   mov ah,01h
 
                         ja csright
 
-                        push dx
-                        push cx
-                        push si
-                        mov dh,5
-                        mov dl,7
-                        mov cl,3
-                        mov si,offset str_clash_l
-                        call showStr
-                        pop si
-                        pop cx
-                        pop dx
+                        ; push dx
+                        ; push cx
+                        ; push si
+                        ; mov dh,5
+                        ; mov dl,7
+                        ; mov cl,3
+                        ; mov si,offset str_clash_l
+                        ; call showStr
+                        ; pop si
+                        ; pop cx
+                        ; pop dx
 
                         ; jna bedead
                         jmp bedead
@@ -699,17 +705,17 @@ gend:   mov ah,01h
 
                         
 
-                        push dx
-                        push cx
-                        push si
-                        mov dh,5
-                        mov dl,7
-                        mov cl,3
-                        mov si,offset str_clash_r
-                        call showStr
-                        pop si
-                        pop cx
-                        pop dx
+                        ; push dx
+                        ; push cx
+                        ; push si
+                        ; mov dh,5
+                        ; mov dl,7
+                        ; mov cl,3
+                        ; mov si,offset str_clash_r
+                        ; call showStr
+                        ; pop si
+                        ; pop cx
+                        ; pop dx
 
                         ;jnb bedead
                         jmp bedead
@@ -723,29 +729,40 @@ gend:   mov ah,01h
 
                         jne judgewin
 
-                        push dx
-                        push cx
-                        push si
-                        mov dh,5
-                        mov dl,7
-                        mov cl,3
-                        mov si,offset str_eat
-                        call showStr
-                        pop si
-                        pop cx
-                        pop dx
+                        ; push dx
+                        ; push cx
+                        ; push si
+                        ; mov dh,5
+                        ; mov dl,7
+                        ; mov cl,3
+                        ; mov si,offset str_eat
+                        ; call showStr
+                        ; pop si
+                        ; pop cx
+                        ; pop dx
 
                         ;je bedead
                         jmp bedead
 
         judgewin:       cmp dx,511
-                        jna checkStatusret
+                        jna removetail
                         or cl,01000000b
-                        jmp checkStatusret
+                        jmp removetail
 
         bedead:         and cl,11111110b
 
+        removetail:     mov bx,cx
+                        and bl,1
+                        cmp bl,0
+                        je checkStatusret
 
+                        mov bx,tail
+                        mov bx,snake[bx]
+                        and byte ptr es:[bx],0
+                        mov byte ptr es:[bx+2],0
+                        add tail,2
+                        and tail,01ffh
+         
         checkStatusret: mov ax,cx
                         pop dx
                         pop es
