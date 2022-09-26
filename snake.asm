@@ -61,9 +61,6 @@ gbegin: call setInt9
 
         call clearScreen        ; 清空屏幕
 
-        ; mov cl,05h
-        ; call delay
-
         call initGame           ; 初始化蛇身和食物位置
 
         call paintFrame         ; 打印游戏边界和分数面板
@@ -86,7 +83,6 @@ gloop:  inc round
         and bl,00100000b
         cmp bl,00100000b
         jne jwin                ; 判断是否吃到食物, 如果没吃到就跳过 addlen
-        ;call addlen             ; 如果吃到食物, 增加长度
         call eatFood
 
 
@@ -106,28 +102,6 @@ pause:
 
         mov cl,02h              ; cl 存储停顿的时间
         call delay               ; 停顿一段时间, 此时接受键盘输入
-
-        ; push dx
-        ; mov dx,head
-        ; call debug
-        ; pop dx
-
-        ; push dx
-        ; push ax
-        ; push bx
-        ; mov bx,head
-        ; sub bx,2
-        ; and bx,01ffh
-        ; mov bx,snake[bx]
-        ; mov ax,bx
-        ; mov bl,160
-        ; div bl
-        ; mov dh,0
-        ; mov dl,ah
-        ; call debug
-        ; pop bx
-        ; pop ax
-        ; pop dx
         
         and al,01111111b
 
@@ -144,7 +118,7 @@ dead:
         jne gbegin
         jmp gend
 
-win:    ;call updateScreen
+win:    
         call youWin             ; 打印 You Win, 按 ENTER 重新开始, 按 ESC 退出
         cmp dl,1                ; youWin 要保证 dl 要么为 1 (ESC), 要么为 1ch (ENTER)
         jne gbegin
@@ -339,13 +313,14 @@ gend:   mov ah,01h
         ; initGame END ------------------------------------
 
 
+
         ; debug BEGIN -------------------------------------
         ; 名称: debug
         ; 参数: dx 存储要显示的数据
         ; 功能: 显示 dx 中的数据
         debug:      push si
                     push cx
-                    
+
                     mov si,offset tmp_str
                     call wtoc
                     push dx
@@ -936,41 +911,6 @@ gend:   mov ah,01h
 
 
 
-        ; addlen BEGIN -----------------------------------
-        ; 名称: addlen
-        ; 参数: 无
-        ; 功能: 增加蛇的长度
-        addlen:     push bx
-                    push dx
-                    
-                    sub tail,2
-                    and tail,01ffh
-                    mov bx,tail
-
-                    push tmp_tail
-                    pop snake[bx]
-
-                    mov dx,bx
-                    mov bx,head
-                    sub bx,dx
-                    and bx,01ffh
-                    cmp bx,511
-                    jna addlenret
-                    or al,01000000b
-
-                    ;sub bx,head
-                    ;and bx,01ffh
-                    ;cmp bx,511
-                    ;jna addlenret
-                    ;or al,01000000b
-
-        addlenret:  pop dx
-                    pop bx
-                    ret
-        ; addlen END -------------------------------------
-
-
-
         ; wtoc BEGIN -------------------------------------
         ; 名称: wtoc
         ; 参数: dx word 型数据
@@ -1090,28 +1030,6 @@ gend:   mov ah,01h
                     ret
         ; showStr END ------------------------------------
 
-        
-
-
-        ; saveInt9 BEGIN ------------------------------------
-        ; 名称: saveInt9
-        ; 参数: 无
-        ; 功能: 保存原本 int 9 中断例程的地址
-        ;saveInt9:   push es
-                    ;push bx
-
-                    ;mov bx,0
-                    ;mov es,bx
-                    ;push es:[9*4]
-                    ;pop int9[bx]
-                    ;push es:[9*4+2]
-                    ;pop int9[bx+2]          ; 保存原来 int 9 中断例程的地址
-
-                    ;pop bx
-                    ;pop es
-                    ;ret
-        ; saveInt9 END --------------------------------------
-
 
 
         ; loadInt9 BEGIN ------------------------------------
@@ -1142,7 +1060,7 @@ gend:   mov ah,01h
 
                     mov bx,0
                     mov es,bx
-                    
+
                     mov word ptr es:[9*4],offset keyPress
                     mov word ptr es:[9*4+2],cs
 
@@ -1217,9 +1135,6 @@ gend:   mov ah,01h
                         and bl,11111001b
                         or bl,00000010b
                         jmp keyPressret
-
-                        
-                        
 
         keyPressret:    call clearBuffer
                         cli
