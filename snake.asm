@@ -772,17 +772,21 @@ gend:   mov ah,01h
                         mov es,bx
 
                         mov bx,tail
+                        sub bx,2
                         and bx,01ffh
-                        mov bx,snake[bx-2]
+                        mov bx,snake[bx]
 
                         mov byte ptr es:[bx],0
                         mov byte ptr es:[bx+2],0
 
                         mov bx,head
+                        sub bx,2
                         and bx,01ffh
                         mov di,bx
-                        mov bx,snake[bx-2]
-                        mov di,snake[di-4]
+                        mov bx,snake[bx]
+                        sub di,2
+                        and di,01ffh
+                        mov di,snake[di]
 
                         mov byte ptr es:[di],01110000b
                         mov byte ptr es:[di+2],01110000b
