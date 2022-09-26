@@ -20,7 +20,6 @@ data segment
     tail dw 0
     score dw 0
     food dw 0
-    status db 0
     str_score db 'score: ',0
     str_author db 'author:Neroll',0
     str_version db 'version:1.0',0
@@ -33,6 +32,11 @@ data segment
     tmp_tail dw 0
     int9 dw 0,0
     round dw 0
+    str_eat db 'You have eaten yourself',0
+    str_clash_u db 'You crashed the up wall',0
+    str_clash_l db 'You crashed the left wall',0
+    str_clash_r db 'You crashed the right wall',0
+    str_clash_b db 'You crashed the bottom wall',0
 data ends
 
 code segment
@@ -95,14 +99,37 @@ jwin:   mov bl,al
 
 pause:  
 
+        ; push dx
+        ; mov dx,round
+        ; call debug
+        ; pop dx
+
+        mov cl,02h              ; cl 存储停顿的时间
+        call delay               ; 停顿一段时间, 此时接受键盘输入
+
         push dx
-        mov dx,round
+        mov dx,head
         call debug
         pop dx
 
-        mov cl,03h              ; cl 存储停顿的时间
-        call delay               ; 停顿一段时间, 此时接受键盘输入
+        ; push dx
+        ; push ax
+        ; push bx
+        ; mov bx,head
+        ; sub bx,2
+        ; and bx,01ffh
+        ; mov bx,snake[bx]
+        ; mov ax,bx
+        ; mov bl,160
+        ; div bl
+        ; mov dh,0
+        ; mov dl,ah
+        ; call debug
+        ; pop bx
+        ; pop ax
+        ; pop dx
         
+        and al,01111111b
 
         jmp gloop               ; 进入下一轮
 
@@ -347,6 +374,8 @@ gend:   mov ah,01h
                     out 40h,al
                     in al,40h
                     in al,40h
+                    in al,40h
+                    in al,40h
                     mov bl,23
                     div bl
                     inc ah
@@ -366,6 +395,8 @@ gend:   mov ah,01h
 
                     mov al,0
                     out 40h,al
+                    in al,40h
+                    in al,40h
                     in al,40h
                     in al,40h
                     mov bl,45
@@ -391,6 +422,7 @@ gend:   mov ah,01h
                     je cratfod
                     cmp bl,00110000b
                     je cratfod
+                    cmp cl,00010000b
 
                     mov food,dx
                     pop es
@@ -500,7 +532,9 @@ gend:   mov ah,01h
                     and tail,01ffh
 
                     mov si,head
-                    mov dx,snake[si-2]
+                    sub si,2
+                    and si,01ffh
+                    mov dx,snake[si]
 
                     mov bx,ax
                     shr bl,1
@@ -532,7 +566,10 @@ gend:   mov ah,01h
         moveLeft:   sub dx,4
                     jmp calcret
 
-        calcret:    mov snake[si],dx
+
+        calcret:    add si,2
+                    and si,01ffh
+                    mov snake[si],dx
 
                     add head,2
                     and head,01ffh
@@ -600,25 +637,106 @@ gend:   mov ah,01h
                         div bl
 
                         cmp al,0
-                        je bedead
+                        jne csbottom
 
-                        cmp al,24
-                        je bedead
+                        push dx
+                        push cx
+                        push si
+                        mov dh,5
+                        mov dl,7
+                        mov cl,3
+                        mov si,offset str_clash_u
+                        call showStr
+                        pop si
+                        pop cx
+                        pop dx
 
-                        shr ah,1
+                        ; je bedead
+                        jmp bedead
+
+        csbottom:       cmp al,24
+                        jne csleft
+
+                        push dx
+                        push cx
+                        push si
+                        mov dh,5
+                        mov dl,7
+                        mov cl,3
+                        mov si,offset str_clash_b
+                        call showStr
+                        pop si
+                        pop cx
+                        pop dx
+
+                        ; je bedead
+                        jmp bedead
+
+        csleft:         shr ah,1
                         cmp ah,1
-                        jna bedead
 
-                        cmp ah,48
-                        jnb bedead
+                        ja csright
 
-                        mov di,head
+                        push dx
+                        push cx
+                        push si
+                        mov dh,5
+                        mov dl,7
+                        mov cl,3
+                        mov si,offset str_clash_l
+                        call showStr
+                        pop si
+                        pop cx
+                        pop dx
+
+                        ; jna bedead
+                        jmp bedead
+
+
+        csright:        cmp ah,48
+
+                        jb csgethead
+
+                        
+
+                        push dx
+                        push cx
+                        push si
+                        mov dh,5
+                        mov dl,7
+                        mov cl,3
+                        mov si,offset str_clash_r
+                        call showStr
+                        pop si
+                        pop cx
+                        pop dx
+
+                        ;jnb bedead
+                        jmp bedead
+
+        csgethead:      mov di,head
                         sub di,2
                         and di,01ffh
                         mov di,snake[di]
 
         eatself:        cmp byte ptr es:[di],01110000b
-                        je bedead
+
+                        jne judgewin
+
+                        push dx
+                        push cx
+                        push si
+                        mov dh,5
+                        mov dl,7
+                        mov cl,3
+                        mov si,offset str_eat
+                        call showStr
+                        pop si
+                        pop cx
+                        pop dx
+
+                        ;je bedead
+                        jmp bedead
 
         judgewin:       cmp dx,511
                         jna checkStatusret
@@ -1029,6 +1147,20 @@ gend:   mov ah,01h
                         pushf
                         call dword ptr int9[0]
 
+                        call clearBuffer
+
+                        and bh,10000000b
+                        cmp bh,10000000b
+                        je keyPressret
+
+                        ; push dx
+                        ; mov dx,round
+                        ; call debug
+                        ; pop dx
+
+                        mov bh,bl
+                        or bl,10000000b
+
                         and bh,00000110b
                         shr bh,1            ; bh 保存当前方向
 
@@ -1043,9 +1175,6 @@ gend:   mov ah,01h
                         jmp keyPressret
 
         processW:       cmp bh,2
-
-                        
-
                         je keyPressret
                         and bl,11111001b
                         jmp keyPressret
@@ -1072,6 +1201,7 @@ gend:   mov ah,01h
                         
 
         keyPressret:    call clearBuffer
+                        cli
                         
                         pop ax
                         mov al,bl
